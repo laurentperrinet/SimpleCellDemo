@@ -32,6 +32,7 @@ from SimpleCV import Camera, Display
 
 import numpy as np
 import time
+import sys
 
 # TODO : plot histogram and membrane potential
 # TODO : remove background of RF
@@ -63,7 +64,7 @@ def do_RF(init=False):
 corr = 0
 voltage = 0.5
 hist = np.ones(quant) / quant
-result = cv.CreateMat(1, 1, cv.CV_32FC1)
+# result = cv.CreateMat(1, 1, cv.CV_32FC1)
 
 def neuron(im, voltage, hist):
     if voltage > 1.: voltage = 0.
@@ -146,6 +147,7 @@ if __name__ == "__main__":
             im = do_RF()
 #             rval, frame = vc.read()
             corr, Vm = neuron(ret, voltage, hist)
+            print corr
             backshotTime = time.time()
             fps = 1. / (backshotTime - snapshotTime)
 #             cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font_, cv.RGB(255, 255, 255))
@@ -159,7 +161,7 @@ if __name__ == "__main__":
     finally:
         # Always close the camera stream
         if AUDIO: stream.close()
-
-        cv.DestroyWindow("Receptive Field")
-        cv.DestroyWindow("Retina")
+        sys.exit()
+#         cv.DestroyWindow("Receptive Field")
+#         cv.DestroyWindow("Retina")
 
