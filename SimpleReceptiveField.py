@@ -27,9 +27,8 @@ except:
     AUDIO = False
 
 from numpy import zeros, linspace, hstack, transpose, pi
-
-import cv2
-from cv2 import cv
+import numpy as np
+from SimpleCV import Camera, Display
 
 import numpy as np
 import time
@@ -48,35 +47,15 @@ adaptive = True
 sample = 5
 sigma = 8.
 
-import numpy as np
-
 #============================================================================
 # Set up input
 #============================================================================
-def retina(img, dst, ret=None):
-    """
-    dummy retina:
-     - smooth
-     - derive
-
-    """
-
-    cv.Laplace(img, dst)
-    cv.Smooth(dst, dst, smoothtype=cv.CV_GAUSSIAN, param1=7, param2=0, param3=0, param4=0)
-
-#     return dst
 def do_RF(init=False):
 
-    img = cv.QueryFrame(capture)
-    dst = cv.CreateImage(cv.GetSize(img), cv.IPL_DEPTH_32F, 3)
-
-    if init:
-        retina(img, dst, ret)
-    else:
-        retina(img, dst)
-    cv.ShowImage("Receptive Field", dst) # cv.fromarray(RF, allowND=True))
-
-    return dst
+    img = cam.getImage().smooth()
+    img = img.smooth()
+#     img = img.edges()
+    return img.getNumpy().mean(axis=2).T
 
 #============================================================================
 # Create the model.
@@ -88,8 +67,8 @@ result = cv.CreateMat(1, 1, cv.CV_32FC1)
 
 def neuron(im, voltage, hist):
     if voltage > 1.: voltage = 0.
-    cv.MatchTemplate(im, RF, result, cv.CV_TM_CCORR_NORMED)
-    corr = result[0, 0]
+#     cv.MatchTemplate(im, RF, result, cv.CV_TM_CCORR_NORMED)
+    corr = np.dot(im.ravel(), RF.ravel()) #result[0, 0]
     quantile = int(((corr+1)/2) * quant)-1
     if adaptive:
         cumhist = np.cumsum(hist)
@@ -120,63 +99,62 @@ if __name__ == "__main__":
 
     snapshotTime = time.time()
     # check if capture device is OK
-    capture = cv2.VideoCapture(0)
-    if not capture:
-        print "Error opening capture device"
-        sys.exit(1)
+    # Initialize the camera
+    cam = Camera()
+    print cam.getProperty("height"), cam.getProperty("width")
 
-    downsize = 2
-    frame = None
-    cv2.namedWindow("preview")
-    while frame is None: rval, frame = capture.read()
-
-    cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_HEIGHT, frame.shape[0] / downsize)
-    cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH, frame.shape[1] / downsize)
-    cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FORMAT, cv.IPL_DEPTH_32F)
-
-
-    font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .5, .5, thickness=3/downsize, lineType=cv.CV_AA)
-    font_ = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .5, .5, thickness=4/downsize, lineType=cv.CV_AA)
+#     downsize = 2
+#     frame = None
+#     cv2.namedWindow("preview")
+#     while frame is None: rval, frame = capture.read()
+# 
+#     cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_HEIGHT, frame.shape[0] / downsize)
+#     cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH, frame.shape[1] / downsize)
+#     cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FORMAT, cv.IPL_DEPTH_32F)
+# 
+# 
+#     font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .5, .5, thickness=3/downsize, lineType=cv.CV_AA)
+#     font_ = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .5, .5, thickness=4/downsize, lineType=cv.CV_AA)
 #     font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1./downsize, 1./downsize, thickness=3./downsize, lineType=cv.CV_AA)
 #     font_ = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1./downsize, 1./downsize, thickness=4./downsize, lineType=cv.CV_AA)
 
     print ' Startup time ', (time.time() - snapshotTime)*1000, ' ms'
     snapshotTime = time.time()
 
-
     try:
-        cv.NamedWindow("Receptive Field", 0)
+        disp = Display()
+#         cv.NamedWindow("Receptive Field", 0)
         RF = do_RF()
-        cv.NamedWindow("Retina", 0)
-        cv.MoveWindow("Receptive Field", 0*RF.width , 0)
-        cv.ResizeWindow("Receptive Field", 2*RF.width, 2*RF.height)
-        cv.Set(RF, 0.)
-        cv.PutText(RF, 'SimpleCellDemo', (12/downsize, 48/downsize), font, cv.RGB(0, 255, 0))
-        cv.PutText(RF, 'Press Esc to exit', (12/downsize, 96/downsize), font, cv.RGB(255, 0, 0))
-        cv.PutText(RF, 'Press r to (re)draw', (12/downsize, 144/downsize), font, cv.RGB(0, 0, 255))
-        cv.ShowImage("Receptive Field", RF)
-
-        rval, frame = vc.read()
-        ret = cv.CreateImage(iframe.shape, cv.IPL_DEPTH_32F, 3)
-        retina(frame, ret)
-        cv.ShowImage("Retina", ret)
-        cv.ResizeWindow("Retina", 2*RF.width, 2*RF.height)
-        cv.MoveWindow("Retina", 2*RF.width, 0)
+#         cv.NamedWindow("Retina", 0)
+#         cv.MoveWindow("Receptive Field", 0*RF.width , 0)
+#         cv.ResizeWindow("Receptive Field", 2*RF.width, 2*RF.height)
+#         cv.Set(RF, 0.)
+#         cv.PutText(RF, 'SimpleCellDemo', (12/downsize, 48/downsize), font, cv.RGB(0, 255, 0))
+#         cv.PutText(RF, 'Press Esc to exit', (12/downsize, 96/downsize), font, cv.RGB(255, 0, 0))
+#         cv.PutText(RF, 'Press r to (re)draw', (12/downsize, 144/downsize), font, cv.RGB(0, 0, 255))
+#         cv.ShowImage("Receptive Field", RF)
+# 
+#         rval, frame = vc.read()
+#         ret = cv.CreateImage(iframe.shape, cv.IPL_DEPTH_32F, 3)
+#         retina(frame, ret)
+#         cv.ShowImage("Retina", ret)
+#         cv.ResizeWindow("Retina", 2*RF.width, 2*RF.height)
+#         cv.MoveWindow("Retina", 2*RF.width, 0)
 
         while True:
             snapshotTime = time.time()
-            rval, frame = vc.read()
-            retina(frame, ret)
+            im = do_RF()
+#             rval, frame = vc.read()
             corr, Vm = neuron(ret, voltage, hist)
             backshotTime = time.time()
             fps = 1. / (backshotTime - snapshotTime)
-            cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font_, cv.RGB(255, 255, 255))
-            cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font, cv.RGB(0, 0, 0))
-
-            cv.ShowImage("Retina", ret)
-            key = cv.WaitKey(1)
-            if key == ord('r'): do_RF()
-            if key == 27: break
+#             cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font_, cv.RGB(255, 255, 255))
+#             cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font, cv.RGB(0, 0, 0))
+# 
+#             cv.ShowImage("Retina", ret)
+#             key = cv.WaitKey(1)
+#             if key == ord('r'): do_RF()
+#             if key == 27: break
 
     finally:
         # Always close the camera stream
