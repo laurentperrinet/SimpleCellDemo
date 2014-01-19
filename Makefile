@@ -7,7 +7,7 @@ zip:
 	zip SimpleReceptiveField.zip pysight.py SimpleReceptiveField.py Makefile setup.py
 
 edit: 
-	mvim pysight.py SimpleReceptiveField.py Makefile setup.py
+	mvim -p grab.py SimpleReceptiveField.py Makefile setup.py
 
 app: SimpleReceptiveField.py
 # 	python setup.py sdist --format=zip
@@ -32,4 +32,4 @@ dependencies:
 clean: 
 	rm -fr dist build  SimpleReceptiveField.zip 
 
-.PHONY: clean 
+.PHONY: clean
