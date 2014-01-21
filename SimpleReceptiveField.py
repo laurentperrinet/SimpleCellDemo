@@ -54,9 +54,11 @@ sigma = 8.
 def do_RF(init=False):
 
     img = cam.getImage().smooth()
-    img = img.smooth()
+    #img = img.smooth()
 #     img = img.edges()
-    return img.getNumpy().mean(axis=2).T
+    img_np = img.getNumpy().mean(axis=2).T
+    img_np /= np.sqrt(np.sum(img_np**2))
+    return img_np
 
 #============================================================================
 # Create the model.
@@ -64,11 +66,9 @@ def do_RF(init=False):
 corr = 0
 voltage = 0.5
 hist = np.ones(quant) / quant
-# result = cv.CreateMat(1, 1, cv.CV_32FC1)
 
 def neuron(im, voltage, hist):
     if voltage > 1.: voltage = 0.
-#     cv.MatchTemplate(im, RF, result, cv.CV_TM_CCORR_NORMED)
     corr = np.dot(im.ravel(), RF.ravel()) #result[0, 0]
     quantile = int(((corr+1)/2) * quant)-1
     if adaptive:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     # check if capture device is OK
     # Initialize the camera
     cam = Camera()
-    print cam.getProperty("height"), cam.getProperty("width")
+    print 'Camera : ', cam.getProperty("height"), cam.getProperty("width")
 
 #     downsize = 2
 #     frame = None
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     snapshotTime = time.time()
 
     try:
-        disp = Display()
+        #disp = Display()
 #         cv.NamedWindow("Receptive Field", 0)
         RF = do_RF()
 #         cv.NamedWindow("Retina", 0)
@@ -146,8 +146,8 @@ if __name__ == "__main__":
             snapshotTime = time.time()
             im = do_RF()
 #             rval, frame = vc.read()
-            corr, Vm = neuron(ret, voltage, hist)
-            print corr
+            corr, Vm = neuron(im, voltage, hist)
+            print corr, Vm
             backshotTime = time.time()
             fps = 1. / (backshotTime - snapshotTime)
 #             cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font_, cv.RGB(255, 255, 255))
@@ -161,7 +161,6 @@ if __name__ == "__main__":
     finally:
         # Always close the camera stream
         if AUDIO: stream.close()
-        sys.exit()
 #         cv.DestroyWindow("Receptive Field")
 #         cv.DestroyWindow("Retina")
 

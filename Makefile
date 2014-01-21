@@ -22,6 +22,9 @@ appzip: app
 
 dist: appzip zip
 
+learn_simplecv:
+	open /usr/local/lib/python2.7/site-packages/SimpleCV/
+
 dependencies:
 	brew install python --framework
 	brew install opencv
