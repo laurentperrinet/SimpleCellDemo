@@ -28,7 +28,7 @@ except:
 
 from numpy import zeros, linspace, hstack, transpose, pi
 import numpy as np
-from SimpleCV import Camera, Display
+from SimpleCV import Camera, Display, Color
 
 import numpy as np
 import time
@@ -51,14 +51,14 @@ sigma = 8.
 #============================================================================
 # Set up input
 #============================================================================
-def do_RF(init=False):
+def do_RF():
 
-    img = cam.getImage().smooth()
+    img = cam.getImage().flipHorizontal().smooth()
     #img = img.smooth()
 #     img = img.edges()
     img_np = img.getNumpy().mean(axis=2).T
     img_np /= np.sqrt(np.sum(img_np**2))
-    return img_np
+    return img, img_np
 
 #============================================================================
 # Create the model.
@@ -123,9 +123,9 @@ if __name__ == "__main__":
     snapshotTime = time.time()
 
     try:
-        #disp = Display()
+#         disp = Display()
 #         cv.NamedWindow("Receptive Field", 0)
-        RF = do_RF()
+        img, RF = do_RF()
 #         cv.NamedWindow("Retina", 0)
 #         cv.MoveWindow("Receptive Field", 0*RF.width , 0)
 #         cv.ResizeWindow("Receptive Field", 2*RF.width, 2*RF.height)
@@ -144,19 +144,15 @@ if __name__ == "__main__":
 
         while True:
             snapshotTime = time.time()
-            im = do_RF()
+            img, im = do_RF()
+
 #             rval, frame = vc.read()
             corr, Vm = neuron(im, voltage, hist)
             print corr, Vm
             backshotTime = time.time()
             fps = 1. / (backshotTime - snapshotTime)
-#             cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font_, cv.RGB(255, 255, 255))
-#             cv.PutText(ret, str('%d'  %fps) + ' fps', (12/downsize, 24/downsize), font, cv.RGB(0, 0, 0))
-# 
-#             cv.ShowImage("Retina", ret)
-#             key = cv.WaitKey(1)
-#             if key == ord('r'): do_RF()
-#             if key == 27: break
+            img.drawText("FPS:" + str(fps), 10, 10, fontsize=30, color=Color.GREEN)
+            img.show()
 
     finally:
         # Always close the camera stream
