@@ -7,11 +7,8 @@ let it spike in the loudspeaker.
 
 Laurent Perrinet, 2010. Credits: see http://invibe.net/LaurentPerrinet/SimpleCellDemo
 
-this depends on OpenCV + numpy + pil, which intalls fine with MacPorts: {{{
-sudo port install opencv +python26 +tbb
-sudo port install py26-numpy py26-scipy py26-pil py26-distribute py26-pip python_select
-sudo python_select python26
-sudo port install py26-ipython py26-matplotlib py26-mayavi py26-pyobjc2-cocoa  # optionnally
+this depends on OpenCV + numpy + pil, which intalls fine with HomeBrew: {{{
+brew install opencv
 }}}
 
 Credits: see pysight.py and EgoViewer.py
@@ -51,15 +48,47 @@ sigma = 8.
 #============================================================================
 # Set up input
 #============================================================================
-def do_RF():
+def do_RF(bb):
 
-    img = cam.getImage().flipHorizontal().smooth()
-    #img = img.smooth()
-#     img = img.edges()
+    img = cam.getImage().smooth()
+    #img = img.smooth().flipHorizontal()
+    img = img.edges()
+    img = img.crop(bb)
     img_np = img.getNumpy().mean(axis=2).T
     img_np /= np.sqrt(np.sum(img_np**2))
     return img, img_np
 
+
+def getBBFromUser(cam, d):
+    p1 = None
+    p2 = None
+    img = cam.getImage()
+    while d.isNotDone():
+        try:
+            img = cam.getImage()
+            img.save(d)
+            dwn = d.leftButtonDownPosition()
+            up = d.leftButtonUpPosition()
+
+            if dwn:
+                p1 = dwn
+            if up:
+                p2 = up
+                break
+
+            time.sleep(0.05)
+        except KeyboardInterrupt:
+            break
+    print p1,p2
+    if not p1 or not p2:
+        return None
+
+    xmax = np.max((p1[0],p2[0]))
+    xmin = np.min((p1[0],p2[0]))
+    ymax = np.max((p1[1],p2[1]))
+    ymin = np.min((p1[1],p2[1]))
+    print xmin,ymin,xmax,ymax
+    return (xmin,ymin,xmax-xmin,ymax-ymin)
 #============================================================================
 # Create the model.
 #============================================================================
@@ -103,60 +132,28 @@ if __name__ == "__main__":
     # Initialize the camera
     cam = Camera()
     print 'Camera : ', cam.getProperty("height"), cam.getProperty("width")
-
-#     downsize = 2
-#     frame = None
-#     cv2.namedWindow("preview")
-#     while frame is None: rval, frame = capture.read()
-# 
-#     cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_HEIGHT, frame.shape[0] / downsize)
-#     cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH, frame.shape[1] / downsize)
-#     cv.SetCaptureProperty(capture, cv.CV_CAP_PROP_FORMAT, cv.IPL_DEPTH_32F)
-# 
-# 
-#     font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .5, .5, thickness=3/downsize, lineType=cv.CV_AA)
-#     font_ = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .5, .5, thickness=4/downsize, lineType=cv.CV_AA)
-#     font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1./downsize, 1./downsize, thickness=3./downsize, lineType=cv.CV_AA)
-#     font_ = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1./downsize, 1./downsize, thickness=4./downsize, lineType=cv.CV_AA)
-
     print ' Startup time ', (time.time() - snapshotTime)*1000, ' ms'
     snapshotTime = time.time()
 
     try:
-#         disp = Display()
-#         cv.NamedWindow("Receptive Field", 0)
-        img, RF = do_RF()
-#         cv.NamedWindow("Retina", 0)
-#         cv.MoveWindow("Receptive Field", 0*RF.width , 0)
-#         cv.ResizeWindow("Receptive Field", 2*RF.width, 2*RF.height)
-#         cv.Set(RF, 0.)
-#         cv.PutText(RF, 'SimpleCellDemo', (12/downsize, 48/downsize), font, cv.RGB(0, 255, 0))
-#         cv.PutText(RF, 'Press Esc to exit', (12/downsize, 96/downsize), font, cv.RGB(255, 0, 0))
-#         cv.PutText(RF, 'Press r to (re)draw', (12/downsize, 144/downsize), font, cv.RGB(0, 0, 255))
-#         cv.ShowImage("Receptive Field", RF)
-# 
-#         rval, frame = vc.read()
-#         ret = cv.CreateImage(iframe.shape, cv.IPL_DEPTH_32F, 3)
-#         retina(frame, ret)
-#         cv.ShowImage("Retina", ret)
-#         cv.ResizeWindow("Retina", 2*RF.width, 2*RF.height)
-#         cv.MoveWindow("Retina", 2*RF.width, 0)
-
-        while True:
+        img = cam.getImage()
+        disp = Display(img.size())
+        bb = getBBFromUser(cam, disp)
+        disp.quit()
+        disp = Display(img.size())
+        img, RF = do_RF(bb)
+        helpstr = "SimpleCellDemo, Press Esc to exit"
+        while disp.isNotDone():
             snapshotTime = time.time()
-            img, im = do_RF()
-
-#             rval, frame = vc.read()
+            img, im = do_RF(bb)
             corr, Vm = neuron(im, voltage, hist)
             print corr, Vm
             backshotTime = time.time()
             fps = 1. / (backshotTime - snapshotTime)
             img.drawText("FPS:" + str(fps), 10, 10, fontsize=30, color=Color.GREEN)
             img.show()
+        disp.quit()
 
     finally:
         # Always close the camera stream
         if AUDIO: stream.close()
-#         cv.DestroyWindow("Receptive Field")
-#         cv.DestroyWindow("Retina")
-
