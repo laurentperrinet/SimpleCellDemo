@@ -51,10 +51,11 @@ sigma = 8.
 def do_RF(bb):
 
     img = cam.getImage().smooth()
-    #img = img.smooth().flipHorizontal()
-    img = img.edges()
+    img = img.smooth()#.flipHorizontal()
+#     img = img.edges()
     img = img.crop(bb)
     img_np = img.getNumpy().mean(axis=2).T
+    img_np += 1e-12
     img_np /= np.sqrt(np.sum(img_np**2))
     return img, img_np
 
@@ -137,12 +138,12 @@ if __name__ == "__main__":
 
     try:
         img = cam.getImage()
-        disp = Display(img.size())
+        disp = Display(img.size(), title = "SimpleCellDemo, Draw the RF's bounding box with mouse")
         bb = getBBFromUser(cam, disp)
         disp.quit()
         disp = Display(img.size())
+        disp = Display(img.size(), title = "SimpleCellDemo, Press Esc to exit")
         img, RF = do_RF(bb)
-        helpstr = "SimpleCellDemo, Press Esc to exit"
         while disp.isNotDone():
             snapshotTime = time.time()
             img, im = do_RF(bb)
