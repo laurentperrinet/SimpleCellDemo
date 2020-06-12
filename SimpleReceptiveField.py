@@ -5,7 +5,7 @@
 SimpleReceptiveField.py : linking the webcam to a crude-but-adaptive neuron and
 let it spike in the loudspeaker.
 
-Laurent Perrinet, 2010. Credits: see http://invibe.net/LaurentPerrinet/SimpleCellDemo
+Laurent Perrinet, 2010. Credits: see https://github.com/laurentperrinet/SimpleCellDemo
 
 this depends on OpenCV + numpy + pil, which intalls fine with HomeBrew: {{{
 brew install opencv
